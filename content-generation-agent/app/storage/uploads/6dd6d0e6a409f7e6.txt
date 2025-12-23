@@ -1,0 +1,9 @@
+RAG signifie Retrieval-Augmented Generation.
+C'est une technique qui combine la recherche d'information
+et la génération de texte par des modèles de langage.
+
+Le RAG permet de réduire les hallucinations
+en s'appuyant sur des documents externes.
+
+Il est souvent utilisé dans les chatbots d'entreprise
+pour répondre à des questions basées sur des documents internes.

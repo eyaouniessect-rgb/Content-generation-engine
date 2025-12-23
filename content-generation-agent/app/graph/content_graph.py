@@ -4,7 +4,7 @@ from app.graph.state import ContentState
 # Import des nodes (agents)
 from app.agents.router_agent import router_node, route_decision
 from app.agents.writer_agent import writer_node
-
+from app.agents.retrieval_agent import retrieval_node
 
 def build_graph():
     """
@@ -15,6 +15,8 @@ def build_graph():
     # Nodes
     graph.add_node("router", router_node)
     graph.add_node("writer", writer_node)
+    graph.add_node("retrieval", retrieval_node)
+
 
     # Entry point
     graph.set_entry_point("router")
@@ -24,13 +26,14 @@ def build_graph():
     graph.add_conditional_edges(
         "router",
         route_decision,
-        {
+        {   "retrieval": "retrieval",
             "writer": "writer",
             "end": END,
         },
     )
 
     # After writer -> END
+    graph.add_edge("retrieval", "writer")
     graph.add_edge("writer", END)
 
     return graph.compile()
