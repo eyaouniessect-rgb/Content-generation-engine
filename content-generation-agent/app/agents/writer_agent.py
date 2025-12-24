@@ -27,29 +27,60 @@ Réponds clairement que l'information n'est pas disponible
 dans le document.
 """
 
-    # 🔵 Cas 3 — RAG actif avec contenu (avec source + page)
+    # 🔵 Cas 3 — RAG actif avec contenu (avec métadonnées enrichies)
     context_blocks = []
 
     for i, chunk in enumerate(retrieved_chunks, start=1):
         text = chunk["text"]
         meta = chunk["metadata"]
+        
+        # Extraction des métadonnées
         source = meta.get("source")
         page = meta.get("page")
+        title = meta.get("title")
+        authors = meta.get("authors")
+        published = meta.get("published")
 
-        label = f"[SOURCE {i} | {source}"
+        # Construction du label enrichi
+        label_parts = [f"SOURCE {i}"]
+        
+        if title:
+            label_parts.append(f'"{title}"')
+        
+        label_parts.append(source)
+        
         if page is not None:
-            label += f" | page {page}"
-        label += "]"
+            label_parts.append(f"page {page}")
+        
+        if authors:
+            # Convertir la string en liste si nécessaire
+            if isinstance(authors, str):
+                author_list = authors.split(" | ")
+            else:
+                author_list = [authors]
+            
+            # Limiter à 3 premiers auteurs
+            if len(author_list) > 3:
+                author_str = ", ".join(author_list[:3]) + " et al."
+            else:
+                author_str = ", ".join(author_list)
+            label_parts.append(f"({author_str})")
+        
+        if published:
+            label_parts.append(f"[{published[:4]}]")  # Année seulement
 
+        label = " | ".join(label_parts)
+        
         context_blocks.append(
-            f"{label}\n{text}"
+            f"[{label}]\n{text}"
         )
 
     context = "\n\n".join(context_blocks)
 
     return f"""
-Tu es un assistant qui répond STRICTEMENT
-en te basant sur le CONTEXTE ci-dessous.
+Tu es un expert en intelligence artificielle et modèles multimodaux.
+Réponds de manière technique et détaillée en te basant STRICTEMENT
+sur le CONTEXTE ci-dessous.
 
 CONTEXTE:
 {context}
@@ -58,13 +89,18 @@ QUESTION:
 {question}
 
 RÈGLES IMPORTANTES:
-- Utilise uniquement les informations du CONTEXTE.
-- Tu peux utiliser les définitions implicites ou classifications clairement indiquées dans le document.
-- Si la réponse n'est pas présente, dis-le clairement.
-- N'utilise aucune connaissance externe.
-- Donne une réponse complète (2 à 6 phrases) et pédagogique.
-- Si possible, ajoute 2 puces "À retenir".
-- Termine par une section "Sources" en citant [SOURCE X | ...].
+- Utilise UNIQUEMENT les informations du CONTEXTE fourni
+- Cite les modèles, architectures et techniques spécifiques mentionnés
+- Structure ta réponse de manière claire et pédagogique
+- N'utilise AUCUNE connaissance externe au contexte
+
+FORMAT DE RÉPONSE:
+1. Introduction (2-3 phrases de synthèse)
+2. Points principaux (3-5 points détaillés avec exemples concrets du contexte)
+3. Section "À retenir" (2-3 puces essentielles)
+4. Section "Sources" citant [SOURCE X | ...]
+
+Si la réponse n'est pas dans le contexte, dis-le clairement.
 """
 
 
@@ -76,20 +112,26 @@ def writer_node(state: ContentState) -> ContentState:
 
     generated = generate_text(final_prompt)
 
-    # 🔹 Construction des sources (source + page)
+    # 🔹 Construction des sources enrichies
     sources = []
     seen = set()
 
     if retrieved_chunks:
         for chunk in retrieved_chunks:
             meta = chunk["metadata"]
+            
+            # Clé unique basée sur source + page
             key = (meta.get("source"), meta.get("page"))
 
             if key not in seen:
                 seen.add(key)
                 sources.append({
                     "source": meta.get("source"),
-                    "page": meta.get("page")
+                    "page": meta.get("page"),
+                    "title": meta.get("title"),
+                    "authors": meta.get("authors"),
+                    "published": meta.get("published"),
+                    "doc_id": meta.get("doc_id")
                 })
 
     state["generated_text"] = generated

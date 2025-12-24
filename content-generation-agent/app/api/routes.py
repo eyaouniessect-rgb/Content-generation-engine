@@ -50,18 +50,29 @@ def generate_from_arxiv(payload: GenerateRequest):
     # 1. Recherche arXiv
     papers = search_arxiv(payload.prompt, max_results=3)
 
-    # 2. Download + ingest auto
+    # 2. Download + ingest auto avec métadonnées enrichies
     for paper in papers:
         pdf_path = download_pdf(
             arxiv_id=paper["arxiv_id"],
             pdf_url=paper["pdf_url"]
         )
-        ingest_document(doc_id=paper["arxiv_id"], file_path=pdf_path)
+        
+        # ✅ Passer les métadonnées du paper
+        ingest_document(
+            doc_id=paper["arxiv_id"],
+            file_path=pdf_path,
+            extra_metadata={
+                "title": paper["title"],
+                "authors": paper["authors"],
+                "published": paper["published"],
+                "summary": paper["summary"]
+            }
+        )
 
-    # 3. Puis EXACTEMENT le même pipeline que /generate
+    # 3. Pipeline avec RAG
     initial_state = {
         "prompt": payload.prompt,
-        "document": "all",  # on cherche sur toute la base
+        "document": "all",
         "retrieved_chunks": [],
         "generated_text": None,
         "image_prompt": None,

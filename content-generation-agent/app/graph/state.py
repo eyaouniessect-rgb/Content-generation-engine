@@ -2,6 +2,16 @@ from typing import Optional, List, Dict, Any
 from typing_extensions import TypedDict
 
 
+class SourceMetadata(TypedDict, total=False):
+    """Metadata for a source document."""
+    source: str
+    page: Optional[int]
+    title: Optional[str]
+    authors: Optional[List[str]]
+    published: Optional[str]
+    doc_id: Optional[str]
+
+
 class ContentState(TypedDict, total=False):
     """
     Shared state for the content generation workflow.
@@ -18,7 +28,7 @@ class ContentState(TypedDict, total=False):
     # RAG
     # =========================
     retrieved_chunks: List[Dict[str, Any]]
-    sources: List[Dict[str, Any]]  # [{ "source": str, "page": int | None }]
+    sources: List[SourceMetadata]  # ✅ Typé avec les métadonnées enrichies
 
     # =========================
     # Text generation
