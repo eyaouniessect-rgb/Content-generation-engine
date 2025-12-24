@@ -15,8 +15,11 @@ def route_decision(state: ContentState) -> str:
     - Otherwise → go directly to writer
     """
     document = state.get("document")
+    retrieved = state.get("retrieved_chunks")
 
-    if document:
+    if document or retrieved is not None:
+        print("→ Routing to RETRIEVAL")
         return "retrieval"
     else:
+        print("→ Routing to WRITER (no document)")
         return "writer"
