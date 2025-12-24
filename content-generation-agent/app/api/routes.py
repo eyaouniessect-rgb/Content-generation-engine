@@ -4,13 +4,15 @@ from app.graph.content_graph import build_graph
 import os
 import hashlib
 from app.rag.ingest import ingest_document
+from sources.arxiv_client import search_arxiv, download_pdf
+
 
 router = APIRouter()
 graph = build_graph()
 
 class GenerateRequest(BaseModel):
     prompt: str
-    document: str | None = None  # doc_id
+   
 
 @router.post("/generate")
 def generate_content(payload: GenerateRequest):
@@ -43,3 +45,28 @@ def ingest(file: UploadFile = File(...)):
 
     return {"doc_id": doc_id, "stored_as": file_path}
 
+@router.post("/arxiv/generate")
+def generate_from_arxiv(payload: GenerateRequest):
+    # 1. Recherche arXiv
+    papers = search_arxiv(payload.prompt, max_results=3)
+
+    # 2. Download + ingest auto
+    for paper in papers:
+        pdf_path = download_pdf(
+            arxiv_id=paper["arxiv_id"],
+            pdf_url=paper["pdf_url"]
+        )
+        ingest_document(doc_id=paper["arxiv_id"], file_path=pdf_path)
+
+    # 3. Puis EXACTEMENT le même pipeline que /generate
+    initial_state = {
+        "prompt": payload.prompt,
+        "document": "all",  # on cherche sur toute la base
+        "retrieved_chunks": [],
+        "generated_text": None,
+        "image_prompt": None,
+        "image_path": None,
+    }
+
+    result = graph.invoke(initial_state)
+    return result

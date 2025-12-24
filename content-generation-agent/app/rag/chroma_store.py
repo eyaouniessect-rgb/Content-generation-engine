@@ -59,7 +59,11 @@ def query_top_k(
     Retrieve top-k chunks with metadata.
     """
     q_emb = embed_query(query)
-    where = {"doc_id": doc_id} if doc_id else None
+    
+    if doc_id and doc_id not in ["all", "arxiv"]:
+        where = {"doc_id": doc_id}
+    else:
+        where = None
 
     res = _collection.query(
         query_embeddings=[q_emb],
