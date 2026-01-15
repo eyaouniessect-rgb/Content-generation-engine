@@ -35,8 +35,3 @@ class ContentState(TypedDict, total=False):
     # =========================
     generated_text: Optional[str]
 
-    # =========================
-    # Image generation
-    # =========================
-    image_prompt: Optional[str]
-    image_path: Optional[str]

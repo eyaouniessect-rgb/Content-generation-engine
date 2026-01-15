@@ -5,13 +5,16 @@ import os
 import hashlib
 from app.rag.ingest import ingest_document
 from sources.arxiv_client import search_arxiv, download_pdf
+from typing import Optional
 
 
 router = APIRouter()
+# Construction du graphe d'agents UNE SEULE FOIS au démarrage
 graph = build_graph()
 
 class GenerateRequest(BaseModel):
     prompt: str
+    document: Optional[str] = None
    
 
 @router.post("/generate")
@@ -19,11 +22,12 @@ def generate_content(payload: GenerateRequest):
     initial_state = {
         "prompt": payload.prompt,
         "document": payload.document,  # doc_id ou None
-        "retrieved_chunks": None,
-        "generated_text": None,
-        "image_prompt": None,
-        "image_path": None,
+        "retrieved_chunks": None,    # Rempli par le retrieval agent
+        "generated_text": None,      # Rempli par le writer agent
+
     }
+
+    # Lancement du pipeline RAG / agents
     result = graph.invoke(initial_state)
     return result
 
@@ -75,8 +79,6 @@ def generate_from_arxiv(payload: GenerateRequest):
         "document": "all",
         "retrieved_chunks": [],
         "generated_text": None,
-        "image_prompt": None,
-        "image_path": None,
     }
 
     result = graph.invoke(initial_state)
