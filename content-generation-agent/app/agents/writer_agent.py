@@ -10,11 +10,11 @@ def build_prompt(
     Build the final prompt depending on whether RAG is active or not.
     """
 
-    # 🟢 Cas 1 — Pas de document → LLM normal
+    #  Cas 1 — Pas de document → LLM normal
     if retrieved_chunks is None:
         return question
 
-    # 🔵 Cas 2 — Document fourni MAIS info absente
+    # Cas 2 — Document fourni MAIS info absente
     if not retrieved_chunks:
         return f"""
 Le document fourni ne contient pas d'information permettant
@@ -27,7 +27,7 @@ Réponds clairement que l'information n'est pas disponible
 dans le document.
 """
 
-    # 🔵 Cas 3 — RAG actif avec contenu (avec métadonnées enrichies)
+    #  Cas 3 — RAG actif avec contenu (avec métadonnées enrichies)
     context_blocks = []
 
     for i, chunk in enumerate(retrieved_chunks, start=1):
